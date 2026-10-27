@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>PIPPO: An Interactive Midnight Birthday Adventure for Tiya 🖤🔴🐧</title>
+  <meta name="description" content="A magical midnight birthday surprise game for Tiya featuring Pippo the orange penguin!">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="state-locked">
+
+  <!-- Floating Audio Mute/Unmute Controller -->
+  <button type="button" class="floating-mute-btn" id="floatingMuteBtn" aria-label="Toggle background music mute" style="display: none;">
+    <span class="mute-icon" id="floatingMuteIcon">🔊</span>
+    <span class="mute-soundwaves" id="muteSoundwaves" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </span>
+    <span class="mute-text" id="floatingMuteText">Music</span>
+  </button>
+
+  <!-- Floating Side Scroll Down Indicator Logo -->
+  <div class="side-scroll-indicator" id="sideScrollIndicator" role="button" tabindex="0" aria-label="Scroll down to next section" style="display: none;">
+    <div class="scroll-pippo-badge">
+      <span class="scroll-pippo-icon">🐧</span>
+    </div>
+    <div class="scroll-arrow-box">
+      <span class="scroll-chevron"></span>
+      <span class="scroll-chevron"></span>
+    </div>
+    <span class="scroll-text">Scroll Down</span>
+  </div>
+
+  <!-- Dev Preview Mode Ribbon -->
+  <div class="dev-banner" id="devBanner">
+    <div class="dev-banner-content">
+      <span class="dev-pill">DEV PREVIEW</span>
+      <span class="dev-text">Test full surprise before midnight:</span>
+      <button type="button" class="dev-toggle-btn" id="devToggleBtn">
+        <span class="dev-btn-icon">⚡</span>
+        <span id="devToggleText">Unlock Now</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Particle Canvas -->
+  <canvas id="particleCanvas" class="particle-canvas" aria-hidden="true"></canvas>
+
+  <!-- ==============================================
+       SCREEN 1: BLACK COUNTDOWN & POKÉ BALL
+       ============================================== -->
+  <section class="screen-countdown" id="screenCountdown" aria-label="Midnight Countdown">
+    <div class="stars-bg" aria-hidden="true"></div>
+
+    <div class="countdown-container">
+      <header class="countdown-header">
+        <h1 class="mystery-title">A little surprise is waiting...</h1>
+        <p class="mystery-subtitle">Something special unlocks at midnight.</p>
+      </header>
+
+      <!-- Real-time Countdown Timer -->
+      <div class="timer-grid" id="timerGrid" role="timer" aria-live="polite">
+        <div class="timer-box">
+          <span class="timer-val" id="timerDays">00</span>
+          <span class="timer-lbl">Days</span>
+        </div>
+        <div class="timer-colon">:</div>
+        <div class="timer-box">
+          <span class="timer-val" id="timerHours">00</span>
+          <span class="timer-lbl">Hours</span>
+        </div>
+        <div class="timer-colon">:</div>
+        <div class="timer-box">
+          <span class="timer-val" id="timerMinutes">00</span>
+          <span class="timer-lbl">Minutes</span>
+        </div>
+        <div class="timer-colon">:</div>
+        <div class="timer-box">
+          <span class="timer-val" id="timerSeconds">00</span>
+          <span class="timer-lbl">Seconds</span>
+        </div>
+      </div>
+
+      <!-- Poké Ball Interactive Component -->
+      <div class="pokeball-stage">
+        <div class="pokeball-glow" id="pokeballGlow"></div>
+        <div 
+          class="pokeball-wrapper" 
+          id="pokeballWrapper" 
+          tabindex="0" 
+          role="button" 
+          aria-label="Interactive Poké Ball. Locked until midnight."
+        >
+          <div class="pokeball" id="pokeball">
+            <div class="pokeball-top">
+              <div class="pokeball-specular"></div>
+            </div>
+            <div class="pokeball-band">
+              <div class="pokeball-button-outer">
+                <div class="pokeball-button-inner" id="pokeballButton"></div>
+              </div>
+            </div>
+            <div class="pokeball-bottom"></div>
+          </div>
+        </div>
+
+        <div class="pokeball-status-box">
+          <p class="pokeball-instruction" id="pokeballInstruction">
+            Something special is waiting inside...
+          </p>
+          <p class="pokeball-callout" id="pokeballCallout">
+            <span class="lock-icon">🔒</span> Unlocks at midnight IST
+          </p>
+        </div>
+      </div>
+
+      <footer class="countdown-footer">
+        <span>Target: 28 October 2026 • 12:00 AM IST</span>
+      </footer>
+    </div>
+  </section>
+
+  <!-- Flash White Overlay for Poké Ball opening transition -->
+  <div class="open-flash" id="openFlash" aria-hidden="true"></div>
+
+  <!-- ==============================================
+       MAIN GAME ENVIRONMENT (UNLOCKED)
+       ============================================== -->
+  <main class="birthday-world" id="birthdayWorld" aria-hidden="true">
+    
+    <!-- Game Navigation & Progress HUD -->
+    <header class="game-hud" id="gameHud">
+      <div class="hud-inner">
+        <div class="hud-mascot-pill">
+          <span class="hud-pippo-icon">🐧</span>
+          <span class="hud-title">PIPPO'S ADVENTURE</span>
+        </div>
+
+        <nav class="hud-nav" aria-label="Birthday Surprises">
+          <button type="button" class="nav-chip active" data-target="sectionPippo">
+            Pippo 🐧
+          </button>
+          <button type="button" class="nav-chip" data-target="sectionScrapbook">
+            Memories 📸
+          </button>
+          <button type="button" class="nav-chip" data-target="sectionLetter">
+            Letter 💌
+          </button>
+          <button type="button" class="nav-chip" data-target="sectionSong">
+            Song 🎵
+          </button>
+          <button type="button" class="nav-chip" data-target="sectionFinal">
+            Final Wish 🎉
+          </button>
+        </nav>
+
+        <div class="hud-progress-wrap">
+          <span class="hud-progress-label" id="hudProgressText">Adventure Mode</span>
+          <div class="hud-progress-bar">
+            <div class="hud-progress-fill" id="hudProgressFill" style="width: 20%;"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 2: MEET PIPPO -->
+    <section class="game-section section-meet-pippo" id="sectionPippo">
+      <div class="section-container">
+        
+        <div class="pippo-hero-card">
+          <div class="pippo-dialogue-bubble">
+            <p class="dialogue-greeting">Happy Birthday, Tiyaaa! 🎂🎉</p>
+            <p class="dialogue-body">
+              I'm <strong>Pippo</strong>, your personal birthday penguin guide! I've been waiting inside the Poké Ball just to celebrate YOU!
+            </p>
+            <div class="dialogue-hint">
+              <span class="sparkle-icon">✨</span> Tap on me anytime for happy wiggles & hearts!
+            </div>
+          </div>
+
+          <div class="pippo-character-stage">
+            <div class="pippo-actor" id="pippoMainActor" tabindex="0" role="button" aria-label="Tap Pippo for a happy bounce!">
+              <svg class="pippo-svg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="pippoOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FFA05C"/>
+                    <stop offset="50%" stop-color="#FF8C42"/>
+                    <stop offset="100%" stop-color="#E86E20"/>
+                  </linearGradient>
+                  <linearGradient id="pippoCream" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#FFF0DF"/>
+                  </linearGradient>
+                  <linearGradient id="pippoYellow" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FFE066"/>
+                    <stop offset="100%" stop-color="#FFC820"/>
+                  </linearGradient>
+                  <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="rgba(232, 110, 32, 0.25)"/>
+                  </filter>
+                </defs>
+
+                <!-- Shadow -->
+                <ellipse cx="100" cy="225" rx="55" ry="12" fill="rgba(180, 100, 40, 0.2)"/>
+
+                <!-- Left Foot -->
+                <ellipse class="pippo-foot pippo-foot-l" cx="72" cy="216" rx="20" ry="11" fill="url(#pippoYellow)"/>
+                <!-- Right Foot -->
+                <ellipse class="pippo-foot pippo-foot-r" cx="128" cy="216" rx="20" ry="11" fill="url(#pippoYellow)"/>
+
+                <!-- Main Body -->
+                <g filter="url(#softGlow)">
+                  <ellipse class="pippo-body" cx="100" cy="130" rx="68" ry="85" fill="url(#pippoOrange)"/>
+                </g>
+
+                <!-- White/Cream Belly -->
+                <ellipse class="pippo-belly" cx="100" cy="145" rx="46" ry="62" fill="url(#pippoCream)"/>
+
+                <!-- Left Flipper -->
+                <g class="pippo-flipper-l-wrap">
+                  <path class="pippo-flipper pippo-flipper-l" d="M 38 120 C 18 135, 12 165, 30 180 C 42 175, 48 150, 42 125 Z" fill="#E86E20"/>
+                </g>
+
+                <!-- Right Flipper (Waving!) -->
+                <g class="pippo-flipper-r-wrap waving-arm">
+                  <path class="pippo-flipper pippo-flipper-r" d="M 162 120 C 182 110, 195 85, 178 70 C 165 78, 155 105, 158 125 Z" fill="#E86E20"/>
+                </g>
+
+                <!-- Eyes -->
+                <g class="pippo-eyes">
+                  <ellipse cx="78" cy="98" rx="10" ry="13" fill="#221C18"/>
+                  <circle cx="75" cy="93" r="4.5" fill="#FFFFFF"/>
+                  <circle cx="81" cy="103" r="1.8" fill="#FFFFFF"/>
+
+                  <ellipse cx="122" cy="98" rx="10" ry="13" fill="#221C18"/>
+                  <circle cx="119" cy="93" r="4.5" fill="#FFFFFF"/>
+                  <circle cx="125" cy="103" r="1.8" fill="#FFFFFF"/>
+                </g>
+
+                <!-- Cheeks -->
+                <ellipse cx="64" cy="112" rx="9" ry="6" fill="rgba(255, 100, 100, 0.35)"/>
+                <ellipse cx="136" cy="112" rx="9" ry="6" fill="rgba(255, 100, 100, 0.35)"/>
+
+                <!-- Beak -->
+                <path class="pippo-beak" d="M 88 106 Q 100 102 112 106 Q 100 125 88 106 Z" fill="url(#pippoYellow)"/>
+              </svg>
+            </div>
+            
+            <div class="pippo-action-prompt">
+              <span class="click-chip">👈 Click Pippo!</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: LIVING ANIMATED SCRAPBOOK -->
+    <section class="game-section section-scrapbook" id="sectionScrapbook">
+      <div class="scrapbook-paper-bg"></div>
+
+      <div class="section-container">
+        
+        <header class="section-header">
+          <h2 class="scrapbook-title">Little Moments, Little Memories 📸</h2>
+          <p class="scrapbook-subtitle">
+            Every snapshot tells a sweet story of laughter, goofiness, and pure cuteness. Click any photo to enlarge it!
+          </p>
+        </header>
+
+        <!-- Scrapbook Decorative Accents -->
+        <div class="scrapbook-accents" aria-hidden="true">
+          <span class="sticker-doodle sticker-heart">🧡</span>
+          <span class="sticker-doodle sticker-star">⭐</span>
+          <span class="sticker-doodle sticker-camera">📷</span>
+          <span class="sticker-doodle sticker-sparkle">✨</span>
+        </div>
+
+        <!-- Scrapbook Photo Grid (Arranged Artistically with Real Uploaded Photos) -->
+        <div class="scrapbook-grid" id="scrapbookGrid">
+          
+          <!-- Photo 1: Hero Funny Pout -->
+          <article class="polaroid-card tilt-left hero-card" data-idx="1" tabindex="0">
+            <div class="washi-tape washi-peach"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_01.jpg" alt="Tiya making a funny cute pout" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">The iconic funny face 😜</span>
+              <span class="caption-date">Current Era</span>
+            </div>
+          </article>
+
+          <!-- Photo 2: With Pikachu -->
+          <article class="polaroid-card tilt-right" data-idx="2" tabindex="0">
+            <div class="washi-tape washi-yellow"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_02.jpg" alt="Tiya looking up with Pikachu plushie" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Caught with Pikachu! ⚡</span>
+              <span class="caption-date">Pikachu approved</span>
+            </div>
+          </article>
+
+          <!-- Photo 3: Baby Tiya Bed Smiling -->
+          <article class="polaroid-card tilt-slight-l" data-idx="3" tabindex="0">
+            <div class="photo-corner top-left"></div>
+            <div class="photo-corner top-right"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_03.jpg" alt="Baby Tiya smiling on bed" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">The cutest smile in the world 🌸</span>
+              <span class="caption-date">Little Tiya</span>
+            </div>
+          </article>
+
+          <!-- Photo 4: Cat-eye glasses thoughtful -->
+          <article class="polaroid-card tilt-right hero-tall" data-idx="4" tabindex="0">
+            <div class="washi-tape washi-orange"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_04.jpg" alt="Tiya in cat-eye glasses looking thoughtful" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Deep thoughts & cat-eye frames 👓</span>
+              <span class="caption-date">Unmatched vibes</span>
+            </div>
+          </article>
+
+          <!-- Photo 5: Baby Tiya Close-up -->
+          <article class="polaroid-card tilt-left" data-idx="5" tabindex="0">
+            <div class="washi-tape washi-peach"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_05.jpg" alt="Baby Tiya close-up with big eyes" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Those big curious eyes 🥺</span>
+              <span class="caption-date">Pure cuteness</span>
+            </div>
+          </article>
+
+          <!-- Photo 6: Baby with Giant Stuffed Dog -->
+          <article class="polaroid-card tilt-right" data-idx="6" tabindex="0">
+            <div class="photo-corner top-left"></div>
+            <div class="photo-corner top-right"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_06.jpg" alt="Baby Tiya with plush toy dog" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Besties with the big puppy 🐶</span>
+              <span class="caption-date">Forever friend</span>
+            </div>
+          </article>
+
+          <!-- Photo 7: Baby Sleeping under Mickey Blanket -->
+          <article class="polaroid-card tilt-slight-l" data-idx="7" tabindex="0">
+            <div class="washi-tape washi-yellow"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_07.jpg" alt="Baby Tiya cozy sleeping under Mickey Mouse blanket" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Dreaming peaceful dreams 😴✨</span>
+              <span class="caption-date">Mickey quilt days</span>
+            </div>
+          </article>
+
+          <!-- Photo 8: Toddler in Cap -->
+          <article class="polaroid-card tilt-left" data-idx="8" tabindex="0">
+            <div class="washi-tape washi-orange"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_08.jpg" alt="Toddler Tiya wearing a cool cap" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Rocking the cap since day one 🧢</span>
+              <span class="caption-date">Little boss</span>
+            </div>
+          </article>
+
+          <!-- Photo 9: Mirror Selfie in Jacket -->
+          <article class="polaroid-card tilt-right" data-idx="9" tabindex="0">
+            <div class="washi-tape washi-peach"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_09.jpg" alt="Tiya mirror selfie in warm jacket and glasses" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Warm jacket & winter aesthetics 🧥</span>
+              <span class="caption-date">Selfie perfection</span>
+            </div>
+          </article>
+
+          <!-- Photo 10: Balcony Forest View -->
+          <article class="polaroid-card tilt-slight-l" data-idx="10" tabindex="0">
+            <div class="photo-corner top-left"></div>
+            <div class="photo-corner top-right"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_10.jpg" alt="Tiya looking out into green trees from balcony" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Lost in green serenity 🌲</span>
+              <span class="caption-date">Quiet moments</span>
+            </div>
+          </article>
+
+          <!-- Photo 11: Peace Sign Selfie -->
+          <article class="polaroid-card tilt-right hero-tall" data-idx="11" tabindex="0">
+            <div class="washi-tape washi-orange"></div>
+            <div class="photo-frame">
+              <img src="assets/images/tiya_11.jpg" alt="Tiya mirror selfie with peace sign" loading="lazy">
+            </div>
+            <div class="polaroid-caption">
+              <span class="caption-handwriting">Peace, smiles & good times ✌️</span>
+              <span class="caption-date">Main character energy</span>
+            </div>
+          </article>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 4: THE ENVELOPE & BIRTHDAY LETTER -->
+    <section class="game-section section-letter" id="sectionLetter">
+      <div class="section-container">
+        
+        <header class="section-header">
+          <h2 class="letter-section-title">Pippo has a little message for you...</h2>
+          <p class="letter-section-subtitle">
+            Tap the envelope below to open your letter 💌
+          </p>
+        </header>
+
+        <!-- Interactive Envelope & Unfolded Letter Presentation -->
+        <div class="envelope-stage" id="envelopeStage">
+          
+          <!-- Closed Envelope -->
+          <div class="envelope-wrapper" id="envelopeWrapper">
+            <div class="envelope" id="envelope" tabindex="0" role="button" aria-label="Interactive envelope. Tap to open birthday letter.">
+              
+              <!-- Envelope Flap (3D folding) -->
+              <div class="envelope-flap" id="envelopeFlap"></div>
+
+              <!-- Wax Seal with Heart and Pippo's Face -->
+              <div class="envelope-seal" id="envelopeSeal">
+                <div class="seal-heart">❤️</div>
+                <div class="seal-pippo-badge">🐧</div>
+              </div>
+
+              <!-- Pocket Front -->
+              <div class="envelope-pocket">
+                <div class="pocket-design-border"></div>
+                <div class="pocket-stamp">
+                  <span>POSTAL</span>
+                  <span>TIYA 10•28</span>
+                </div>
+                <div class="pocket-pippo-face">
+                  <span class="pippo-face-icon">🐧</span>
+                  <span class="pocket-address">To: Tiya (The Best Friend) 🧡</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Open Button below envelope -->
+            <div class="envelope-cta-box" id="envelopeCtaBox">
+              <button type="button" class="game-btn primary-btn letter-open-btn" id="btnOpenLetter">
+                <span>Open your letter 💌</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Unfolded Full Letter Card (Spacious, 100% Readable, No Overlaps) -->
+          <div class="unfolded-letter-wrapper" id="unfoldedLetterWrapper" style="display: none;">
+            <article class="letter-sheet" id="letterSheet">
+              
+              <div class="letter-top-deco">
+                <span class="deco-star">✨</span>
+                <span class="deco-heart">🧡</span>
+                <span class="deco-star">✨</span>
+              </div>
+
+              <div class="letter-content" id="letterContent">
+                <h3 class="letter-salutation">Happy birthday, Tiyaaa! 🧡🐧</h3>
+
+                <p class="letter-para" data-para="1">
+                  Pippo has a very important announcement: you're officially allowed to have the best day ever today. No arguments. 😤🎂
+                </p>
+
+                <p class="letter-para" data-para="2">
+                  But seriously, thank you for being my friend and for listening to all my random rants, overthinking sessions, and breakdowns. 😂❤️ Thanks for letting me yap about everything, even when my brain turns one tiny problem into a whole movie.
+                </p>
+
+                <p class="letter-para" data-para="3">
+                  You probably don't realize how much it means to have someone who just listens and lets me be myself. You make the little things feel easier, and I'm genuinely grateful for that.
+                </p>
+
+                <p class="letter-para" data-para="4">
+                  I hope this year brings you loads of happiness, good food, laughter, exciting opportunities, and people who care for you as much as you deserve.
+                </p>
+
+                <p class="letter-para" data-para="5">
+                  Keep being your lovely, chaotic, wonderful self. And whenever life gets too much, remember that you deserve someone who listens to you, too.
+                </p>
+
+                <p class="letter-para" data-para="6">
+                  Thank you for being my friend, Tiya. Have the happiest birthday ever!
+                </p>
+
+                <p class="letter-signoff" data-para="7">
+                  Sending you a giant penguin hug. Pippo out. 🐧🧡
+                </p>
+              </div>
+
+              <!-- Peeking Pippo beside letter -->
+              <div class="letter-pippo-peek" aria-hidden="true">
+                <span class="peeking-icon">🐧</span>
+              </div>
+
+              <!-- Controls inside letter -->
+              <div class="letter-actions">
+                <button type="button" class="btn-letter-action" id="btnLetterSkip">
+                  <span>Show All Text</span>
+                </button>
+                <button type="button" class="btn-letter-action" id="btnLetterReplay">
+                  <span>Read Again 🔄</span>
+                </button>
+                <button type="button" class="btn-letter-action primary" id="btnLetterClose">
+                  <span>Fold Letter Back 💌</span>
+                </button>
+              </div>
+
+            </article>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 5: THE BIRTHDAY SONG -->
+    <section class="game-section section-song" id="sectionSong">
+      <div class="section-container">
+        
+        <header class="section-header">
+          <h2 class="song-section-title">One Little Birthday Song 🎂</h2>
+          <p class="song-section-subtitle">
+            Put on your party hat and hit play for Tiya's birthday soundtrack!
+          </p>
+        </header>
+
+        <div class="music-player-card">
+          
+          <!-- Pippo with Birthday Hat -->
+          <div class="song-pippo-box">
+            <div class="party-hat-wrap" aria-hidden="true">
+              <div class="party-hat">
+                <span class="hat-pompom">✨</span>
+              </div>
+            </div>
+            <div class="song-pippo-actor" id="songPippoActor">
+              <span class="pippo-singer-icon">🐧</span>
+            </div>
+            
+            <!-- Floating musical notes -->
+            <div class="floating-notes" id="floatingNotes" aria-hidden="true">
+              <span class="note note-1">♪</span>
+              <span class="note note-2">♫</span>
+              <span class="note note-3">♩</span>
+              <span class="note note-4">♬</span>
+            </div>
+          </div>
+
+          <!-- Player Controls -->
+          <div class="player-body">
+            
+            <div class="track-info">
+              <h3 class="track-title" id="trackTitle">Happy Birthday to Tiya 🎂</h3>
+              <p class="track-status" id="trackStatus">Ready to play</p>
+            </div>
+
+            <!-- Animated Audio Equalizer Visualizer -->
+            <div class="equalizer-bars" id="equalizerBars" aria-hidden="true">
+              <span class="eq-bar bar-1"></span>
+              <span class="eq-bar bar-2"></span>
+              <span class="eq-bar bar-3"></span>
+              <span class="eq-bar bar-4"></span>
+              <span class="eq-bar bar-5"></span>
+              <span class="eq-bar bar-6"></span>
+              <span class="eq-bar bar-7"></span>
+              <span class="eq-bar bar-8"></span>
+            </div>
+
+            <!-- Time and Progress Bar -->
+            <div class="player-progress-wrap">
+              <span class="time-label" id="currentTimeLabel">0:00</span>
+              <div class="player-progress-bar" id="progressBar" tabindex="0" role="slider" aria-label="Audio progress">
+                <div class="player-progress-fill" id="progressFill" style="width: 0%;"></div>
+              </div>
+              <span class="time-label" id="durationLabel">0:30</span>
+            </div>
+
+            <!-- Main Button Controls -->
+            <div class="player-controls">
+              <button type="button" class="ctrl-btn" id="btnRestartAudio" aria-label="Restart Song">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                </svg>
+              </button>
+
+              <button type="button" class="game-btn primary-btn play-big-btn" id="btnTogglePlay">
+                <span class="play-icon" id="playIcon">▶</span>
+                <span id="playBtnText">Play Happy Birthday 🎵</span>
+              </button>
+
+              <div class="volume-slider-wrap">
+                <button type="button" class="ctrl-btn" id="btnMuteToggle" aria-label="Mute or unmute">
+                  <span id="volIcon">🔊</span>
+                </button>
+                <input 
+                  type="range" 
+                  class="volume-range" 
+                  id="volumeSlider" 
+                  min="0" 
+                  max="1" 
+                  step="0.05" 
+                  value="0.85" 
+                  aria-label="Volume Slider"
+                >
+              </div>
+            </div>
+
+            <!-- Friendly Audio Asset Note -->
+            <div class="audio-source-note" id="audioSourceNote">
+              <span class="info-icon">ℹ️</span>
+              <span id="audioNoteText">Playing birthday soundtrack • Loops automatically</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 6: FINAL CELEBRATION SCREEN -->
+    <section class="game-section section-final" id="sectionFinal">
+      <div class="section-container">
+        
+        <div class="final-celebration-card">
+          
+          <div class="final-pippo-stage">
+            <div class="final-pippo-actor">
+              <svg class="pippo-svg final-svg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="100" cy="225" rx="55" ry="12" fill="rgba(180, 100, 40, 0.2)"/>
+                <ellipse class="pippo-foot" cx="72" cy="216" rx="20" ry="11" fill="#FFC820"/>
+                <ellipse class="pippo-foot" cx="128" cy="216" rx="20" ry="11" fill="#FFC820"/>
+                <ellipse class="pippo-body" cx="100" cy="130" rx="68" ry="85" fill="#FF8C42"/>
+                <ellipse class="pippo-belly" cx="100" cy="145" rx="46" ry="62" fill="#FFF0DF"/>
+                
+                <!-- Eyes with loving sparkles -->
+                <ellipse cx="78" cy="98" rx="10" ry="13" fill="#221C18"/>
+                <circle cx="75" cy="93" r="4.5" fill="#FFFFFF"/>
+                <circle cx="81" cy="103" r="1.8" fill="#FFFFFF"/>
+                <ellipse cx="122" cy="98" rx="10" ry="13" fill="#221C18"/>
+                <circle cx="119" cy="93" r="4.5" fill="#FFFFFF"/>
+                <circle cx="125" cy="103" r="1.8" fill="#FFFFFF"/>
+                
+                <!-- Cheeks -->
+                <ellipse cx="64" cy="112" rx="9" ry="6" fill="rgba(255, 100, 100, 0.4)"/>
+                <ellipse cx="136" cy="112" rx="9" ry="6" fill="rgba(255, 100, 100, 0.4)"/>
+                <!-- Beak -->
+                <path d="M 88 106 Q 100 102 112 106 Q 100 125 88 106 Z" fill="#FFC820"/>
+
+                <!-- Left Arm Waving Goodbye -->
+                <path class="pippo-flipper waving-arm" d="M 38 120 C 18 100, 8 75, 25 65 C 38 72, 48 95, 42 120 Z" fill="#E86E20"/>
+
+                <!-- Right Arm Hugging Heart -->
+                <path class="pippo-flipper" d="M 160 135 C 145 155, 125 165, 115 155 C 120 140, 145 130, 160 135 Z" fill="#E86E20"/>
+
+                <!-- Glowing Orange Heart Held by Pippo -->
+                <g class="held-heart-glow">
+                  <path d="M 100 135 C 90 120, 70 120, 70 140 C 70 160, 100 180, 100 180 C 100 180, 130 160, 130 140 C 130 120, 110 120, 100 135 Z" fill="#FF5E36"/>
+                  <circle cx="85" cy="133" r="3.5" fill="#FFA588"/>
+                </g>
+              </svg>
+            </div>
+            
+            <div class="heart-float-particles" id="heartFloatParticles" aria-hidden="true"></div>
+          </div>
+
+          <div class="final-text-content">
+            <h2 class="final-headline">Happy birthday, Tiya! 🎉</h2>
+
+            <p class="final-para">
+              Thank you for being my friend, for listening to all my rants, and for making the little moments count.
+            </p>
+
+            <p class="final-para">
+              I hope this year gives you a million reasons to smile, lots of beautiful memories, and the same kindness you give to everyone around you.
+            </p>
+
+            <p class="final-para">
+              Stay happy, take care of yourself, and never stop being you.
+            </p>
+
+            <p class="final-order">
+              Now go eat some cake. That's an official Pippo order. 🎂🐧🧡
+            </p>
+
+            <div class="final-actions">
+              <a href="#sectionScrapbook" class="game-btn secondary-btn">
+                <span>Revisit Memories 📸</span>
+              </a>
+              <a href="#sectionLetter" class="game-btn secondary-btn" id="btnRevisitLetter">
+                <span>Read Letter Again 💌</span>
+              </a>
+              <button type="button" class="game-btn primary-btn" id="btnConfettiBurst">
+                <span>More Confetti! 🎊</span>
+              </button>
+            </div>
+
+            <footer class="final-footer">
+              <p>Made with all the care in the world for Tiya 🧡 • October 28</p>
+            </footer>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==============================================
+       LIGHTBOX MODAL FOR SCRAPBOOK PHOTOS
+       ============================================== -->
+  <div class="lightbox-modal" id="lightboxModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox-dialog">
+      <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close photo">✕</button>
+      <div class="lightbox-img-wrap">
+        <img src="" alt="Enlarged memory" id="lightboxImg">
+      </div>
+      <div class="lightbox-meta">
+        <h4 class="lightbox-caption" id="lightboxCaption"></h4>
+        <p class="lightbox-tag" id="lightboxTag"></p>
+      </div>
+      <div class="lightbox-nav">
+        <button type="button" class="lightbox-prev" id="lightboxPrev" aria-label="Previous photo">‹</button>
+        <button type="button" class="lightbox-next" id="lightboxNext" aria-label="Next photo">›</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Element with Loop -->
+  <audio id="bgAudio" preload="auto" loop>
+    <source src="assets/audio/birthday-song.mp3" type="audio/mpeg">
+    <source src="birthday-song.mp3" type="audio/mpeg">
+    <source src="assets/audio/birthday-song.wav" type="audio/wav">
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
